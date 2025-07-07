@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FocusFairy: Anti-Distraction Study App</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Poppins -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Custom CSS for dreamy background and animations */
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #a770ef 0%, #cf8bf3 50%, #fbc2eb 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .container {
+            background-color: rgba(255, 255, 255, 0.9);
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            padding: 2.5rem;
+            max-width: 90%;
+            width: 500px;
+            text-align: center;
+            position: relative;
+            z-index: 10;
+        }
+
+        video {
+            border-radius: 15px;
+            width: 100%;
+            max-width: 400px;
+            height: auto;
+            margin: 1.5rem auto;
+            display: block;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        button {
+            background: linear-gradient(45deg, #8a2be2, #ff69b4);
+            color: white;
+            padding: 0.8rem 2rem;
+            border-radius: 10px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        input[type="number"] {
+            border-radius: 10px;
+            border: 1px solid #ccc;
+            padding: 0.6rem 1rem;
+            width: 100%;
+            max-width: 200px;
+            margin: 0 auto;
+            text-align: center;
+        }
+
+        .dreamy-element {
+            position: absolute;
+            opacity: 0.6;
+            animation: float 20s infinite ease-in-out alternate;
+            z-index: 0;
+        }
+
+        .cloud1 { top: 10%; left: -5%; width: 150px; height: 80px; background-color: rgba(255, 255, 255, 0.7); border-radius: 50%; box-shadow: 0 0 20px rgba(255, 255, 255, 0.5); animation-duration: 25s; }
+        .cloud2 { bottom: 20%; right: -10%; width: 200px; height: 100px; background-color: rgba(255, 255, 255, 0.7); border-radius: 50%; box-shadow: 0 0 20px rgba(255, 255, 255, 0.5); animation-duration: 30s; animation-delay: 5s; }
+        .sparkle1 { top: 5%; right: 15%; font-size: 3rem; color: #fff; text-shadow: 0 0 10px #fff; animation: sparkle 3s infinite ease-in-out alternate; animation-delay: 1s; }
+        .sparkle2 { bottom: 10%; left: 20%; font-size: 2rem; color: #fff; text-shadow: 0 0 10px #fff; animation: sparkle 3.5s infinite ease-in-out alternate; animation-delay: 2s; }
+        .sparkle3 { top: 30%; left: 5%; font-size: 2.5rem; color: #fff; text-shadow: 0 0 10px #fff; animation: sparkle 2.8s infinite ease-in-out alternate; animation-delay: 0.5s; }
+
+        @keyframes float {
+            0% { transform: translateY(0) translateX(0); }
+            50% { transform: translateY(-20px) translateX(20px); }
+            100% { transform: translateY(0) translateX(0); }
+        }
+
+        @keyframes sparkle {
+            0% { opacity: 0.6; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.2); }
+            100% { opacity: 0.6; transform: scale(1); }
+        }
+
+        .distraction-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 105, 180, 0.2);
+            border-radius: 20px;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease-in-out;
+            z-index: 5;
+        }
+
+        .distraction-overlay.active {
+            animation: flashOverlay 0.5s ease-in-out;
+        }
+
+        @keyframes flashOverlay {
+            0% { opacity: 0; }
+            50% { opacity: 1; }
+            100% { opacity: 0; }
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4">
+
+    <div class="dreamy-element cloud1"></div>
+    <div class="dreamy-element cloud2"></div>
+    <div class="dreamy-element sparkle1">✨</div>
+    <div class="dreamy-element sparkle2">🌟</div>
+    <div class="dreamy-element sparkle3">💫</div>
+
+    <div class="container relative">
+        <div id="initial-screen">
+            <h1 class="text-4xl font-bold text-purple-800 mb-6">FocusFairy</h1>
+            <p class="text-gray-600 mb-8">Aplikasi anti-distraksi untuk belajar lebih fokus.</p>
+
+            <div class="mb-6">
+                <label for="study-duration" class="block text-gray-700 text-lg font-medium mb-2">Durasi Belajar (menit):</label>
+                <input type="number" id="study-duration" value="25" min="1" class="p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-center text-lg">
+            </div>
+
+            <button id="start-button" class="px-8 py-3 rounded-xl text-white font-semibold text-lg shadow-lg hover:shadow-xl transition-all duration-300">
+                Mulai Belajar
+            </button>
+        </div>
+
+        <div id="study-screen" class="hidden">
+            <h2 class="text-3xl font-bold text-purple-800 mb-4">Sesi Belajar Aktif</h2>
+            <div class="flex justify-center items-center mb-4 text-gray-700 font-semibold text-xl">
+                <p>Jumlah Gangguan: <span id="distraction-counter" class="text-pink-600">0</span></p>
+            </div>
+            <p class="text-5xl font-extrabold text-purple-700 mb-6" id="timer-display">00:00</p>
+            <video id="video" autoplay muted class="rounded-xl shadow-lg"></video>
+            <div class="distraction-overlay" id="distraction-animation-overlay"></div>
+        </div>
+
+        <div id="summary-screen" class="hidden">
+            <h2 class="text-3xl font-bold text-purple-800 mb-4">Sesi Selesai!</h2>
+            <div class="text-left text-gray-700 text-lg space-y-3 mb-8">
+                <p>Total Waktu Belajar: <span id="summary-total-time" class="font-semibold text-pink-600">0 menit</span></p>
+                <p>Jumlah Gangguan: <span id="summary-distractions" class="font-semibold text-pink-600">0</span></p>
+                <p>Level Fokus: <span id="summary-focus-level" class="font-extrabold text-purple-700"></span></p>
+            </div>
+            <button id="restart-button" class="px-8 py-3 rounded-xl text-white font-semibold text-lg shadow-lg hover:shadow-xl transition-all duration-300">
+                Belajar Lagi
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Get references to HTML elements
+        const initialScreen = document.getElementById('initial-screen');
+        const studyScreen = document.getElementById('study-screen');
+        const summaryScreen = document.getElementById('summary-screen');
+
+        const studyDurationInput = document.getElementById('study-duration');
+        const startButton = document.getElementById('start-button');
+        const restartButton = document.getElementById('restart-button');
+
+        const timerDisplay = document.getElementById('timer-display');
+        const distractionCounterDisplay = document.getElementById('distraction-counter');
+        const video = document.getElementById('video');
+        const distractionAnimationOverlay = document.getElementById('distraction-animation-overlay');
+
+        const summaryTotalTime = document.getElementById('summary-total-time');
+        const summaryDistractions = document.getElementById('summary-distractions');
+        const summaryFocusLevel = document.getElementById('summary-focus-level');
+
+        // Global variables for app state
+        let distractionCount = 0; // Unified distraction counter
+        let remainingTime = 0; // Remaining study time in seconds
+        let studyStartTime = 0; // Timestamp when study started
+        let isMobile = false; // Flag to check if the user is on a mobile device
+
+        // Dummy sound for notification. Replace with your preferred soft MP3 URL.
+        const notificationSound = new Audio('https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3');
+
+        // Function to detect if the user is on a mobile device
+        function detectMobileDevice() {
+            isMobile = /Mobi|Android/i.test(navigator.userAgent);
+        }
+
+        // Function to track distractions based on tab visibility
+        function trackDistractions() {
+            document.addEventListener('visibilitychange', () => {
+                if (document.visibilityState === 'hidden') {
+                    distractionCount++;
+                    distractionCounterDisplay.textContent = distractionCount;
+                    notificationSound.play().catch(e => console.error("Error playing sound:", e));
+                    triggerDreamyAnimation();
+                }
+            });
+        }
+
+        // Starts the study timer countdown.
+        function startTimer() {
+            const durationMinutes = parseInt(studyDurationInput.value);
+            if (isNaN(durationMinutes) || durationMinutes <= 0) {
+                const messageBox = document.createElement('div');
+                messageBox.className = 'fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center z-50';
+                messageBox.innerHTML = `
+                    <div class="bg-white p-8 rounded-lg shadow-xl text-center">
+                        <p class="text-lg text-red-600 mb-4">Mohon masukkan durasi belajar yang valid (dalam menit).</p>
+                        <button class="bg-purple-500 text-white px-4 py-2 rounded-lg" onclick="this.parentNode.parentNode.remove()">OK</button>
+                    </div>
+                `;
+                document.body.appendChild(messageBox);
+                return;
+            }
+            remainingTime = durationMinutes * 60; // Convert minutes to seconds
+            studyStartTime = Date.now(); // Record start time for total study duration calculation
+
+            initialScreen.classList.add('hidden');
+            studyScreen.classList.remove('hidden');
+            summaryScreen.classList.add('hidden');
+
+            updateTimerDisplay(); // Display initial time immediately
+
+            // Start tracking distractions
+            trackDistractions();
+        }
+
+        // Update the timer display with current remaining time.
+        function updateTimerDisplay() {
+            const minutes = Math.floor(remainingTime / 60);
+            const seconds = remainingTime % 60;
+            timerDisplay.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+        }
+
+        // Ends the study session.
+        function endStudy() {
+            studyScreen.classList.add('hidden');
+            summaryScreen.classList.remove('hidden');
+
+            // Calculate total study time
+            const totalStudyMinutes = Math.round((Date.now() - studyStartTime) / 60000);
+            summaryTotalTime.textContent = `${totalStudyMinutes} menit`;
+            summaryDistractions.textContent = distractionCount;
+
+            // Determine focus level based on distraction count
+            let focusLevel = '';
+            let focusColor = '';
+            if (distractionCount < 3) {
+                focusLevel = 'Super Fokus';
+                focusColor = 'text-green-600';
+            } else if (distractionCount >= 3 && distractionCount <= 6) {
+                focusLevel = 'Cukup Fokus';
+                focusColor = 'text-yellow-600';
+            } else {
+                focusLevel = 'Perlu Usaha Lagi';
+                focusColor = 'text-red-600';
+            }
+            summaryFocusLevel.textContent = focusLevel;
+            summaryFocusLevel.className = `font-extrabold ${focusColor}`; // Apply color class for emphasis
+
+            // Reset counters for the next session
+            distractionCount = 0;
+            distractionCounterDisplay.textContent = '0';
+        }
+
+        // Triggers a short, dreamy visual animation (overlay flash).
+        function triggerDreamyAnimation() {
+            distractionAnimationOverlay.classList.add('active');
+            setTimeout(() => {
+                distractionAnimationOverlay.classList.remove('active');
+            }, 500); // Duration of the animation (must match CSS animation duration)
+        }
+
+        // Event Listeners for buttons
+        startButton.addEventListener('click', () => {
+            detectMobileDevice();
+            startTimer();
+        });
+        restartButton.addEventListener('click', () => {
+            summaryScreen.classList.add('hidden');
+            initialScreen.classList.remove('hidden');
+            timerDisplay.textContent = '00:00'; // Reset timer display
+        });
+
+        // Initialize the app
+        window.onload = detectMobileDevice;
+    </script>
+</body>
+</html>
