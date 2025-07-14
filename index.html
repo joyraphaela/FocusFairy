@@ -1,294 +1,643 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>FocusFairy: Anti-Distraction Study App</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;800&display=swap" rel="stylesheet"/>
-  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.14.0/dist/tf.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd"></script>
-  <style>
-    body {
-      font-family: 'Poppins', sans-serif;
-      background: linear-gradient(135deg, #8a2be2 0%, #ff69b4 50%, #fbc2eb 100%);
-      min-height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      overflow: hidden;
-      position: relative;
-    }
-    .container {
-      background-color: rgba(255, 255, 255, 0.95);
-      border-radius: 25px;
-      box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
-      padding: 3rem;
-      max-width: 90%;
-      width: 550px;
-      text-align: center;
-      position: relative;
-      z-index: 10;
-      backdrop-filter: blur(5px);
-    }
-    video {
-      border-radius: 20px;
-      width: 100%;
-      max-width: 450px;
-      height: auto;
-      margin: 2rem auto;
-      display: block;
-      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
-      aspect-ratio: 16 / 9;
-      object-fit: cover;
-    }
-    button {
-      background: linear-gradient(45deg, #a770ef, #cf8bf3, #fbc2eb);
-      color: #fff;
-      padding: 1rem 2.5rem;
-      border-radius: 12px;
-      font-weight: 700;
-      transition: all 0.3s ease;
-      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
-      border: none;
-      cursor: pointer;
-      font-size: 1.125rem;
-    }
-    button:hover {
-      transform: translateY(-5px) scale(1.02);
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.35);
-    }
-    input[type="number"], select {
-      border-radius: 12px;
-      border: 1px solid #d1d5db;
-      padding: 0.8rem 1.2rem;
-      width: 100%;
-      max-width: 250px;
-      margin: 0 auto;
-      text-align: center;
-      font-size: 1.1rem;
-      color: #374151;
-    }
-    input[type="number"]:focus, select:focus {
-      border-color: #8a2be2;
-      outline: none;
-      box-shadow: 0 0 0 3px rgba(138, 43, 226, 0.2);
-    }
-    .dreamy-element {
-      position: absolute;
-      opacity: 0.6;
-      animation: float 20s infinite ease-in-out alternate;
-      z-index: 0;
-      filter: blur(1px);
-    }
-    .cloud1 { top: 8%; left: -8%; width: 180px; height: 100px; background-color: rgba(255,255,255,0.75); border-radius: 50%; box-shadow: 0 0 25px rgba(255,255,255,0.6); animation-duration: 28s; }
-    .cloud2 { bottom: 15%; right: -12%; width: 220px; height: 120px; background-color: rgba(255,255,255,0.75); border-radius: 50%; box-shadow: 0 0 25px rgba(255,255,255,0.6); animation-duration: 33s; animation-delay: 5s; }
-    .sparkle1 { top: 5%; right: 15%; font-size: 3.5rem; color: #fff; text-shadow: 0 0 12px #fff; animation: sparkle 3s infinite ease-in-out alternate; animation-delay: 1s; }
-    .sparkle2 { bottom: 10%; left: 20%; font-size: 2.5rem; color: #fff; text-shadow: 0 0 12px #fff; animation: sparkle 3.5s infinite ease-in-out alternate; animation-delay: 2s; }
-    .sparkle3 { top: 30%; left: 5%; font-size: 3rem; color: #fff; text-shadow: 0 0 12px #fff; animation: sparkle 2.8s infinite ease-in-out alternate; animation-delay: 0.5s; }
-    @keyframes float {
-      0% { transform: translateY(0) translateX(0); }
-      50% { transform: translateY(-30px) translateX(30px); }
-      100% { transform: translateY(0) translateX(0); }
-    }
-    @keyframes sparkle {
-      0% { opacity: 0.6; transform: scale(1); }
-      50% { opacity: 1; transform: scale(1.3); }
-      100% { opacity: 0.6; transform: scale(1); }
-    }
-    .distraction-overlay {
-      position: absolute;
-      top: 0; left: 0; width: 100%; height: 100%;
-      background-color: rgba(255, 105, 180, 0.3);
-      border-radius: 25px;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.3s ease-in-out;
-      z-index: 5;
-    }
-    .distraction-overlay.active {
-      animation: flashOverlay 0.5s ease-in-out;
-    }
-    @keyframes flashOverlay {
-      0% { opacity: 0; }
-      50% { opacity: 1; }
-      100% { opacity: 0; }
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FocusFairy</title>
+    
+    <!-- Load Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Load Fonts from Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lora:wght@500;700&family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- Load Tone.js for sound notifications -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
+
+    <style>
+        /* --- Base Styles & Animated Background --- */
+        :root {
+            --bg-gradient-start: #e0c3fc;
+            --bg-gradient-mid1: #8ec5fc;
+            --bg-gradient-mid2: #c3eaff;
+            --bg-gradient-end: #a1c4fd;
+            --card-bg: rgba(255, 255, 255, 0.6);
+            --card-border: rgba(255, 255, 255, 0.3);
+            --text-primary: #1f2937; /* gray-800 */
+            --text-secondary: #4b5563; /* gray-600 */
+            --text-gradient-start: #4f46e5;
+            --text-gradient-end: #a855f7;
+            --card-shadow: rgba(31, 38, 135, 0.1);
+            --glow-color: rgba(255, 255, 255, 0.4);
+            --input-bg: rgba(255, 255, 255, 0.7);
+            --input-border: #d1d5db; /* gray-300 */
+            --progress-ring-color: #6366f1; /* indigo-500 */
+            --toggle-bg: #e5e7eb;
+            --toggle-knob: white;
+        }
+
+        body { 
+            font-family: 'Inter', sans-serif; 
+            -webkit-font-smoothing: antialiased; 
+            -moz-osx-font-smoothing: grayscale;
+            background: linear-gradient(-45deg, var(--bg-gradient-start), var(--bg-gradient-mid1), var(--bg-gradient-mid2), var(--bg-gradient-end));
+            background-size: 400% 400%;
+            animation: gradient-animation 20s ease infinite;
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 2rem 1rem;
+            transition: background 0.5s ease;
+        }
+
+        /* --- Premium Dark Mode Styles --- */
+        body.dark {
+  --bg-gradient-start: #1a132b;
+  --bg-gradient-mid1: #2c1b4f;
+  --bg-gradient-mid2: #1f1a35;
+  --bg-gradient-end: #1a132b;
+
+  --card-bg: rgba(36, 28, 69, 0.95); /* lebih gelap dan pekat */
+  --card-border: rgba(196, 181, 253, 0.3);
+
+  --text-primary: #a7a7e4; /* terang, soft lavender */
+  --text-secondary: #6452a3;
+  --text-gradient-start: #e9d5ff;
+  --text-gradient-end: #93c5fd;
+
+  --card-shadow: rgba(0, 0, 0, 0.45);
+  --glow-color: rgba(167, 139, 250, 0.25);
+
+  --input-bg: rgba(50, 40, 80, 0.9);
+  --input-border: #8b5cf6; /* violet-500 */
+
+  --progress-ring-color: #c4b5fd;
+  --toggle-bg: #45357b;
+  --toggle-knob: #a78bfa;
+}
+
+        
+        @keyframes gradient-animation { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+
+        h1, h2, h3 { font-family: 'Lora', serif; color: var(--text-primary); }
+        p, label, span, div { color: var(--text-secondary); }
+        input[type="number"], input[type="text"] { background-color: var(--input-bg); border-color: var(--input-border); color: var(--text-primary); }
+        input[type="number"]:focus, input[type="text"]:focus { --tw-ring-color: var(--text-gradient-end); }
+
+        .glass-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(18px);
+            -webkit-backdrop-filter: blur(18px);
+            border: 1px solid var(--card-border);
+            animation: subtle-glow 5s ease-in-out infinite, fadeIn 0.8s ease-out forwards;
+            transition: background 0.5s ease, border 0.5s ease;
+            opacity: 0;
+        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes subtle-glow { 0%, 100% { box-shadow: 0 0 15px var(--glow-color), 0 8px 32px 0 var(--card-shadow); } 50% { box-shadow: 0 0 30px var(--glow-color), 0 8px 32px 0 var(--card-shadow); } }
+
+        .youtube-player { position: absolute; top: -9999px; left: -9999px; width: 0; height: 0; opacity: 0; pointer-events: none; }
+        
+        input[type="range"] { -webkit-appearance: none; appearance: none; width: 100%; height: 8px; background: #e5e7eb; border-radius: 9999px; outline: none; transition: background 0.3s; }
+        body.dark input[type="range"] { background: #4a5568; }
+        input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 24px; height: 24px; background: #818cf8; cursor: pointer; border-radius: 50%; border: 4px solid white; box-shadow: 0 4px 12px rgba(129, 140, 248, 0.4); transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out; }
+        input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.15); box-shadow: 0 6px 16px rgba(129, 140, 248, 0.5); }
+        
+        .cute-loader svg { animation: pulse 1.5s ease-in-out infinite; }
+        @keyframes pulse { 0%, 100% { transform: scale(0.8); opacity: 0.6; } 50% { transform: scale(1.2); opacity: 1; } }
+        
+        .btn-hover-effect { transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out; }
+        .btn-hover-effect:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(0,0,0,0.12); }
+        .btn-hover-effect:active { transform: translateY(-1px); box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+
+        .gradient-text { background: linear-gradient(45deg, var(--text-gradient-start), var(--text-gradient-end)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        
+        #progress-ring { transition: stroke-dashoffset 0.5s ease-out; stroke: var(--progress-ring-color); }
+        @keyframes pulse-ring { 0%, 100% { filter: drop-shadow(0 0 3px var(--progress-ring-color)); } 50% { filter: drop-shadow(0 0 10px var(--progress-ring-color)); } }
+        #pomodoro-timer.running #progress-ring { animation: pulse-ring 2.5s ease-in-out infinite; }
+
+        #task-list li { transition: all 0.4s ease; }
+        #task-list li.completed span { text-decoration: line-through; color: #9ca3af; }
+        body.dark #task-list li.completed span { color: #52525b; } /* zinc-600 */
+        .delete-task { transition: opacity 0.2s ease; }
+        li:hover .delete-task { opacity: 1; }
+        @keyframes slideIn { from { opacity: 0; transform: translateX(-20px); } to { opacity: 1; transform: translateX(0); } }
+        .task-item-enter { animation: slideIn 0.4s ease-out forwards; }
+
+        .theme-switch-wrapper { display: flex; align-items: center; }
+        .theme-switch { display: inline-block; height: 26px; position: relative; width: 50px; }
+        .theme-switch input { display:none; }
+        .slider { background-color: #ccc; bottom: 0; cursor: pointer; left: 0; position: absolute; right: 0; top: 0; transition: .4s; }
+        .slider:before { background-color: #fff; bottom: 4px; content: ""; height: 18px; left: 4px; position: absolute; transition: .4s; width: 18px; }
+        input:checked + .slider { background-color: #7c3aed; }
+        input:checked + .slider:before { transform: translateX(24px); }
+        .slider.round { border-radius: 34px; }
+        .slider.round:before { border-radius: 50%; }
+
+        #global-toggle-container { background-color: var(--toggle-bg); border-radius: 9999px; padding: 0.25rem; display: flex; width: 100%; max-width: 280px; margin: 0 auto; position: relative; cursor: pointer; transition: background-color 0.3s ease; }
+        #global-toggle-knob { position: absolute; top: 0.25rem; left: 0.25rem; width: calc(50% - 0.25rem); height: calc(100% - 0.5rem); background: var(--toggle-knob); border-radius: 9999px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); transition: transform 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55); }
+        #global-toggle-container.active #global-toggle-knob { transform: translateX(calc(100% + .25rem)); }
+        .toggle-option { width: 50%; z-index: 10; display: flex; align-items: center; justify-content: center; padding: 0.5rem; transition: color 0.3s ease; font-weight: 500;}
+        .toggle-option.active { color: var(--text-gradient-start); }
+    </style>
 </head>
-<body class="p-4">
+<body>
 
-  <div class="dreamy-element cloud1"></div>
-  <div class="dreamy-element cloud2"></div>
-  <div class="dreamy-element sparkle1">✨</div>
-  <div class="dreamy-element sparkle2">🌟</div>
-  <div class="dreamy-element sparkle3">💫</div>
+    <div id="main-container" class="w-full max-w-7xl mx-auto glass-card rounded-3xl p-6 sm:p-8 lg:p-10">
+        
+        <header class="relative text-center mb-8 md:mb-12">
+            <h1 class="text-4xl sm:text-5xl lg:text-6xl font-bold gradient-text">✨ FocusFairy ✨</h1>
+            <p class="mt-4 text-lg">Gasuka suasana sepi? sama aokwokwaokwo</p>
+            <div class="theme-switch-wrapper absolute top-0 right-0">
+                <label class="theme-switch" for="theme-checkbox">
+                    <input type="checkbox" id="theme-checkbox" />
+                    <div class="slider round"></div>
+                </label>
+            </div>
+        </header>
 
-  <div class="container relative">
-    <div id="initial-screen">
-      <h1 class="text-5xl font-extrabold text-purple-700 mb-4">FocusFairy</h1>
-      <p class="text-gray-700 text-lg mb-8 max-w-sm mx-auto">Tingkatkan fokus belajarmu dengan aplikasi anti-distraksi yang menenangkan.</p>
+        <main class="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
+            
+            <div class="flex flex-col space-y-8">
+                <div class="bg-white/50 p-6 rounded-2xl shadow-lg">
+                    <h2 class="text-2xl font-bold mb-4 flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-3 text-indigo-500"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                        Timer Pomodoro
+                    </h2>
+                    <div id="pomodoro-timer" class="relative flex flex-col items-center justify-center bg-white rounded-xl p-6 shadow-inner h-64 sm:h-72">
+                        <svg class="absolute w-full h-full" viewBox="0 0 100 100">
+                            <circle class="text-slate-200" stroke-width="4" cx="50" cy="50" r="45" fill="transparent" />
+                            <circle id="progress-ring" stroke-width="4" cx="50" cy="50" r="45" fill="transparent" stroke-linecap="round" transform="rotate(-90 50 50)" />
+                        </svg>
+                        <div class="z-10 text-center">
+                            <div id="timer-display" class="text-7xl font-bold tracking-wider mb-2" style="color: var(--text-primary)">25:00</div>
+                            <div id="timer-mode" class="font-semibold mb-4 text-lg" style="color: var(--progress-ring-color)">Waktunya Fokus!</div>
+                            <div id="session-stats" class="text-sm mb-4">Sesi Selesai Hari Ini: <span id="session-count" class="font-bold">0</span></div>
+                            <div class="flex justify-center gap-4">
+                                <button id="start-pause-btn" class="bg-indigo-600 text-white font-semibold px-8 py-3 rounded-lg btn-hover-effect focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 text-lg">Mulai</button>
+                                <button id="reset-btn" class="bg-slate-500 text-white font-semibold px-8 py-3 rounded-lg btn-hover-effect focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-400 text-lg">Reset</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label for="focus-duration" class="block text-sm font-medium mb-1">Durasi Fokus (menit)</label>
+                            <input type="number" id="focus-duration" value="25" min="1" class="mt-1 block w-full p-3 border rounded-md shadow-sm">
+                        </div>
+                        <div>
+                            <label for="break-duration" class="block text-sm font-medium mb-1">Durasi Istirahat (menit)</label>
+                            <input type="number" id="break-duration" value="5" min="1" class="mt-1 block w-full p-3 border rounded-md shadow-sm">
+                        </div>
+                    </div>
+                </div>
 
-      <div class="space-y-6">
-        <div>
-          <label for="study-duration" class="block text-gray-800 text-lg font-semibold mb-2">Durasi Belajar (menit):</label>
-          <input type="number" id="study-duration" value="25" min="1" />
-        </div>
-        <div>
-          <label for="background-sound" class="block text-gray-800 text-lg font-semibold mb-2">Pilih Suara Latar:</label>
-          <select id="background-sound">
-            <option value="none">Tidak Ada</option>
-            <option value="rain">Hujan Rintik</option>
-            <option value="ocean">Ombak Laut</option>
-            <option value="relax">Musik Relaksasi</option>
-          </select>
-        </div>
-      </div>
+                <div class="bg-white/50 p-6 rounded-2xl shadow-lg">
+                    <h2 class="text-2xl font-bold mb-4 flex items-center">
+                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-3 text-purple-500"><path d="M15 6.5A3.5 3.5 0 0 0 8.5 3A3.5 3.5 0 0 0 5 6.5A3.5 3.5 0 0 0 8.5 10H10v8a2 2 0 0 0 4 0 4 4 0 0 0-4-4H8.5A3.5 3.5 0 0 0 5 6.5"/><path d="M15 6.5A3.5 3.5 0 0 1 18.5 3 3.5 3.5 0 0 1 22 6.5 3.5 3.5 0 0 1 18.5 10H18v8a2 2 0 0 1-4 0 4 4 0 0 1 4-4h.5A3.5 3.5 0 0 1 22 6.5"/></svg>
+                        Daftar Tugas
+                    </h2>
+                    <div class="mt-4">
+                        <input type="text" id="task-input" placeholder="Tambah tugas baru & tekan Enter..." class="w-full p-3 border rounded-md shadow-sm mb-4">
+                        <ul id="task-list" class="space-y-2 max-h-48 overflow-y-auto"></ul>
+                    </div>
+                </div>
 
-      <button id="start-button" class="mt-10">Mulai Belajar</button>
+                <div class="bg-white/50 p-6 rounded-2xl shadow-lg">
+                    <h2 class="text-2xl font-bold mb-4 flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-3 text-green-500"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>
+                        Atau mau dengerin lagu?
+                    </h2>
+                    <div id="spotify-player-container" class="mt-4 rounded-xl overflow-hidden shadow-md">
+                        <iframe style="border-radius:12px" src="https://open.spotify.com/embed/playlist/3r1oZbWwdNgmz8Xn8XIJag?utm_source=generator&theme=0" width="100%" height="152" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"></iframe>
+                    </div>
+                </div>
+            </div>
+
+            <div class="space-y-6 bg-white/50 p-6 rounded-2xl shadow-lg">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-2xl font-bold text-center lg:text-left">Suara Sekitar</h2>
+                    <div id="global-toggle-container" data-state="paused">
+                        <div id="global-toggle-knob"></div>
+                        <div class="toggle-option active" id="global-pause-option">
+                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" class="mr-2"><path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z"></path></svg>
+                            Jeda
+                        </div>
+                        <div class="toggle-option" id="global-play-option">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" class="mr-2"><path d="M6 4v16l13-8L6 4z"></path></svg>
+                            Putar
+                        </div>
+                    </div>
+                </div>
+                <div id="sound-controls" class="space-y-5"></div>
+            </div>
+        </main>
     </div>
 
-    <div id="study-screen" class="hidden">
-      <h2 class="text-4xl font-extrabold text-purple-700 mb-4">Sesi Belajar Aktif</h2>
-      <p class="text-gray-700 text-lg mb-2">Tetap fokus ya!</p>
-      <p class="text-xl font-semibold mb-4">Gangguan terdeteksi: <span id="distraction-counter" class="text-pink-600 font-bold">0</span></p>
-      <p id="timer-display" class="text-7xl font-extrabold text-purple-800 mb-8">00:00</p>
-      <video id="video" autoplay muted></video>
-      <div class="distraction-overlay" id="distraction-animation-overlay"></div>
-    </div>
+    <div id="youtube-players-container" class="youtube-player"></div>
 
-    <div id="summary-screen" class="hidden">
-      <h2 class="text-4xl font-extrabold text-purple-700 mb-4">Sesi Selesai! 🎉</h2>
-      <p class="text-gray-700 text-lg mb-8">Kerja bagus! Mari lihat hasilnya:</p>
-      <div class="text-left text-gray-800 text-xl space-y-4 mb-10 mx-auto max-w-xs">
-        <p>Total Waktu Belajar: <span id="summary-total-time" class="font-bold text-pink-600">0 menit</span></p>
-        <p>Jumlah Gangguan: <span id="summary-distractions" class="font-bold text-pink-600">0</span></p>
-        <p>Level Fokus: <span id="summary-focus-level" class="font-extrabold"></span></p>
-      </div>
-      <button id="restart-button">Belajar Lagi</button>
-    </div>
-  </div>
+    <script>
+        // --- CONFIGURATION ---
+        const sounds = [
+            { id: 'cafe', name: 'Rumah di Pagi Hari', videoId: 'gaGrHUekGrc', icon: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6 mr-3 text-yellow-800"><path d="M17 8h.01"></path><path d="M12.5 4H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5"></path><path d="M18 8a4 4 0 1 1-8 0c0-2.5 3-2.5 3-5a2.5 2.5 0 0 1 5 0c0 2.5-3 2.5-3 5Z"></path><path d="M20 19v-2a2 2 0 0 0-2-2H8"></path></svg>` },
+            { id: 'rain', name: 'Hujan Deras', videoId: 'q76bMs-NwRk', icon: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6 mr-3 text-blue-500"><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"></path><path d="M16 14v6"></path><path d="M8 14v6"></path><path d="M12 16v6"></path></svg>` },
+            { id: 'fireplace', name: 'Api Unggun', videoId: 'L_LUpnjgPso', icon: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6 mr-3 text-orange-500"><path d="M2 17a5 5 0 0 0 10 0c0-2.8-2.2-5-5-5s-5 2.2-5 5Z"></path><path d="m9 17 3-3"></path><path d="M22 17a5 5 0 0 0-10 0c0-2.8 2.2-5 5-5s5 2.2 5 5Z"></path><path d="m15 17-3-3"></path></svg>` },
+            { id: 'ocean', name: 'Debur Ombak', videoId: 'bn9F19Hi1Lk', icon: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6 mr-3 text-cyan-500"><path d="M16.5 6.5c1 .9 1.5 2.2 1.5 3.5 0 2.2-1.8 4-4 4H4"></path><path d="M8 12.5c1 .9 1.5 2.2 1.5 3.5 0 2.2-1.8 4-4 4H4"></path><path d="m5 8 3-3 3 3"></path><path d="m5 19 3-3 3 3"></path></svg>` },
+            { id: 'forest', name: 'Suara Hutan', videoId: 'xNN7iTA57jM', icon: `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6 mr-3 text-green-600"><path d="M12 22s-8-4.5-8-11.8A8 8 0 0 1 12 2a8 8 0 0 1 8 8.2c0 7.3-8 11.8-8 11.8z"></path><path d="M12 12a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"></path></svg>` },
+        ];
+        
+        let isAudioUnlocked = false;
+        const players = {};
+        let isApiReady = false;
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            loadTheme();
+            loadSettings();
+            loadTasks();
+            loadStats();
+            initSoundControls();
+            initPomodoro();
+            initTodoList();
+            addEventListeners();
+        });
+        
+        function loadTheme() {
+            const isDarkMode = localStorage.getItem('focusFairyTheme') === 'dark';
+            document.body.classList.toggle('dark', isDarkMode);
+            document.getElementById('theme-checkbox').checked = isDarkMode;
+        }
 
-  <script>
-    const video = document.getElementById('video');
-    const startButton = document.getElementById('start-button');
-    const restartButton = document.getElementById('restart-button');
-    const initialScreen = document.getElementById('initial-screen');
-    const studyScreen = document.getElementById('study-screen');
-    const summaryScreen = document.getElementById('summary-screen');
-    const distractionCounterDisplay = document.getElementById('distraction-counter');
-    const timerDisplay = document.getElementById('timer-display');
-    const distractionOverlay = document.getElementById('distraction-animation-overlay');
-    const summaryTotalTime = document.getElementById('summary-total-time');
-    const summaryDistractions = document.getElementById('summary-distractions');
-    const summaryFocusLevel = document.getElementById('summary-focus-level');
-    const studyDurationInput = document.getElementById('study-duration');
-    const backgroundSoundSelect = document.getElementById('background-sound');
+        function toggleTheme() {
+            const isDarkMode = document.getElementById('theme-checkbox').checked;
+            document.body.classList.toggle('dark', isDarkMode);
+            localStorage.setItem('focusFairyTheme', isDarkMode ? 'dark' : 'light');
+            // Re-apply volume slider colors
+            sounds.forEach(sound => {
+                const slider = document.querySelector(`.volume-slider[data-sound="${sound.id}"]`);
+                if(slider) {
+                    updateVolumeDisplay(sound.id, slider.value);
+                }
+            });
+        }
 
-    let distractionCount = 0;
-    let remainingTime = 0;
-    let timerInterval;
-    let studyStartTime;
-    let model;
-    const backgroundAudio = new Audio();
-    backgroundAudio.loop = true;
-    backgroundAudio.volume = 0.5;
-    const soundUrls = {
-      none: '',
-      rain: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
-      ocean: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3',
-      relax: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3'
-    };
+        function saveSettings() {
+            const settings = {
+                volumes: {},
+                focusDuration: document.getElementById('focus-duration').value,
+                breakDuration: document.getElementById('break-duration').value,
+            };
+            sounds.forEach(sound => {
+                const slider = document.querySelector(`.volume-slider[data-sound="${sound.id}"]`);
+                if (slider) settings.volumes[sound.id] = slider.value;
+            });
+            localStorage.setItem('focusFairySettings', JSON.stringify(settings));
+        }
 
-    async function setupCamera() {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-      video.srcObject = stream;
-      await video.play();
-      await loadModel();
-      detectObjects();
-    }
+        function loadSettings() {
+            const settings = JSON.parse(localStorage.getItem('focusFairySettings'));
+            if (!settings) return;
+            document.getElementById('focus-duration').value = settings.focusDuration || 25;
+            document.getElementById('break-duration').value = settings.breakDuration || 5;
+        }
+        
+        function loadStats() {
+            const stats = JSON.parse(localStorage.getItem('focusFairyStats'));
+            const today = new Date().toLocaleDateString();
+            if (stats && stats.date === today) {
+                document.getElementById('session-count').textContent = stats.count;
+            } else {
+                localStorage.setItem('focusFairyStats', JSON.stringify({ count: 0, date: today }));
+            }
+        }
 
-    async function loadModel() {
-      model = await cocoSsd.load();
-    }
+        function updateStats() {
+            const stats = JSON.parse(localStorage.getItem('focusFairyStats')) || { count: 0, date: new Date().toLocaleDateString() };
+            const today = new Date().toLocaleDateString();
+            if (stats.date !== today) {
+                stats.count = 1;
+                stats.date = today;
+            } else {
+                stats.count++;
+            }
+            document.getElementById('session-count').textContent = stats.count;
+            localStorage.setItem('focusFairyStats', JSON.stringify(stats));
+        }
 
-    async function detectObjects() {
-      if (!video || video.readyState !== 4) {
-        requestAnimationFrame(detectObjects);
-        return;
-      }
-      const predictions = await model.detect(video);
-      if (predictions.some(p => p.class === 'cell phone' && p.score > 0.6)) {
-        distractionCount++;
-        distractionCounterDisplay.textContent = distractionCount;
-        distractionOverlay.classList.add('active');
-        setTimeout(() => distractionOverlay.classList.remove('active'), 500);
-      }
-      setTimeout(() => requestAnimationFrame(detectObjects), 2000);
-    }
+        let tasks = [];
+        const taskList = document.getElementById('task-list');
+        const taskInput = document.getElementById('task-input');
 
-    function startTimer() {
-      const duration = parseInt(studyDurationInput.value);
-      if (!duration || duration <= 0) return;
-      remainingTime = duration * 60;
-      studyStartTime = Date.now();
-      updateTimer();
-      timerInterval = setInterval(updateTimer, 1000);
-    }
+        function initTodoList() {
+            taskInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter' && taskInput.value.trim() !== '') {
+                    addTask(taskInput.value.trim());
+                    taskInput.value = '';
+                }
+            });
+            taskList.addEventListener('click', (e) => {
+                const li = e.target.closest('li');
+                if (!li) return;
+                if (e.target.classList.contains('delete-task')) {
+                    deleteTask(parseInt(li.dataset.id));
+                } else {
+                    toggleTask(parseInt(li.dataset.id));
+                }
+            });
+        }
+        
+        function addTask(text) {
+            tasks.push({ id: Date.now(), text, completed: false });
+            saveAndRenderTasks(true); // Pass true to animate the new task
+        }
 
-    function updateTimer() {
-      const minutes = Math.floor(remainingTime / 60);
-      const seconds = remainingTime % 60;
-      timerDisplay.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-      if (remainingTime <= 0) {
-        clearInterval(timerInterval);
-        endSession();
-      } else {
-        remainingTime--;
-      }
-    }
+        function deleteTask(id) {
+            tasks = tasks.filter(task => task.id !== id);
+            saveAndRenderTasks();
+        }
 
-    function endSession() {
-      backgroundAudio.pause();
-      backgroundAudio.currentTime = 0;
-      if (video.srcObject) {
-        video.srcObject.getTracks().forEach(track => track.stop());
-      }
-      studyScreen.classList.add('hidden');
-      summaryScreen.classList.remove('hidden');
-      const total = Math.round((Date.now() - studyStartTime) / 60000);
-      summaryTotalTime.textContent = `${total} menit`;
-      summaryDistractions.textContent = distractionCount;
-      const focus = distractionCount < 3 ? 'Super Fokus' : distractionCount <= 6 ? 'Cukup Fokus' : 'Perlu Usaha Lagi';
-      summaryFocusLevel.textContent = focus;
-      distractionCount = 0;
-      distractionCounterDisplay.textContent = '0';
-    }
+        function toggleTask(id) {
+            tasks = tasks.map(task => task.id === id ? { ...task, completed: !task.completed } : task);
+            saveAndRenderTasks();
+        }
 
-    function playBackgroundSound(key) {
-      const url = soundUrls[key];
-      if (url) {
-        backgroundAudio.src = url;
-        backgroundAudio.play().catch(e => console.log(e));
-      } else {
-        backgroundAudio.pause();
-        backgroundAudio.currentTime = 0;
-      }
-    }
+        function saveAndRenderTasks(animateNew = false) {
+            localStorage.setItem('focusFairyTasks', JSON.stringify(tasks));
+            renderTasks(animateNew);
+        }
 
-    startButton.addEventListener('click', () => {
-      initialScreen.classList.add('hidden');
-      studyScreen.classList.remove('hidden');
-      playBackgroundSound(backgroundSoundSelect.value);
-      setupCamera();
-      startTimer();
-    });
+        function loadTasks() {
+            tasks = JSON.parse(localStorage.getItem('focusFairyTasks')) || [];
+            renderTasks();
+        }
+        
+        function renderTasks(animateNew = false) {
+            const lastTaskId = animateNew && tasks.length > 0 ? tasks[tasks.length - 1].id : null;
+            taskList.innerHTML = '';
+            tasks.forEach(task => {
+                const li = document.createElement('li');
+                li.dataset.id = task.id;
+                li.className = `p-2 flex items-center justify-between cursor-pointer rounded-md ${task.completed ? 'completed' : ''} hover:bg-white/50`;
+                if (task.id === lastTaskId) {
+                    li.classList.add('task-item-enter');
+                }
+                li.innerHTML = `<span class="flex-grow">${task.text}</span><button class="delete-task text-red-400 hover:text-red-600 opacity-0 font-bold ml-2">✖</button>`;
+                taskList.appendChild(li);
+            });
+        }
 
-    restartButton.addEventListener('click', () => {
-      summaryScreen.classList.add('hidden');
-      initialScreen.classList.remove('hidden');
-      timerDisplay.textContent = '00:00';
-    });
-  </script>
+        function unlockAudio() {
+            if (isAudioUnlocked) return;
+            Tone.start().then(() => console.log("Audio context (Tone.js) started."));
+            for (const soundId in players) {
+                const player = players[soundId];
+                if (player && typeof player.playVideo === 'function') {
+                    player.playVideo();
+                    player.pauseVideo();
+                }
+            }
+            isAudioUnlocked = true;
+            console.log("All audio sources unlocked.");
+        }
+
+        function initSoundControls() {
+            const soundControlsContainer = document.getElementById('sound-controls');
+            const youtubePlayersContainer = document.getElementById('youtube-players-container');
+            sounds.forEach(sound => {
+                const playerDiv = document.createElement('div');
+                playerDiv.id = `player-${sound.id}`;
+                youtubePlayersContainer.appendChild(playerDiv);
+                const controlHTML = `<div class="bg-white/50 p-4 rounded-xl flex items-center shadow-sm"><button data-sound="${sound.id}" class="play-pause-btn p-2 rounded-full bg-indigo-100 cursor-not-allowed flex-shrink-0" disabled><div class="cute-loader"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6 text-indigo-400"><path d="M12 2l2.53 8.29h8.47l-6.86 5.12 2.6 8.29-6.74-4.9-6.74 4.9 2.6-8.29-6.86-5.12h8.47L12 2z"/></svg></div><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6 text-indigo-500 play-icon hidden"><path d="M6 4v16l13-8L6 4z"></path></svg><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6 text-indigo-500 pause-icon hidden"><path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z"></path></svg></button><div class="flex-grow ml-4"><div class="flex items-center justify-between font-medium mb-2"><div class="flex items-center">${sound.icon}<span class="text-primary">${sound.name}</span></div><div class="flex items-center"><svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 mr-1 volume-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M11 5L6 9H2v6h4l5 4zM19 12l-2-2v4l2-2zM16.5 12c0-1.77-1.02-3.29-2.5-4.03v8.06c1.48-.73 2.5-2.25 2.5-4.03z"/></svg><svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 mr-1 volume-mute-icon hidden" viewBox="0 0 24 24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg><span class="volume-percentage text-sm font-bold w-10 text-right">0%</span></div></div><input type="range" min="0" max="100" value="0" data-sound="${sound.id}" class="volume-slider w-full mt-2"></div></div>`;
+                soundControlsContainer.innerHTML += controlHTML;
+            });
+        }
+
+        function onYouTubeIframeAPIReady() {
+            isApiReady = true;
+            const settings = JSON.parse(localStorage.getItem('focusFairySettings'));
+            sounds.forEach(sound => {
+                players[sound.id] = new YT.Player(`player-${sound.id}`, {
+                    videoId: sound.videoId,
+                    playerVars: { 'autoplay': 0, 'controls': 0, 'loop': 1, 'playlist': sound.videoId },
+                    events: { 'onReady': (event) => onPlayerReady(event, settings), 'onStateChange': onPlayerStateChange }
+                });
+            });
+        }
+
+        function onPlayerReady(event, settings) {
+            const player = event.target;
+            const soundId = Object.keys(players).find(key => players[key] === player);
+            const savedVolume = (settings && settings.volumes) ? settings.volumes[soundId] || 0 : 0;
+            const slider = document.querySelector(`.volume-slider[data-sound="${soundId}"]`);
+            if(slider) slider.value = savedVolume;
+            
+            player.setVolume(savedVolume);
+            if (savedVolume == 0) player.mute(); else player.unMute();
+
+            const controlBtn = document.querySelector(`.play-pause-btn[data-sound="${soundId}"]`);
+            if (controlBtn) {
+                controlBtn.disabled = false;
+                controlBtn.classList.remove('cursor-not-allowed');
+                controlBtn.classList.add('hover:bg-indigo-200', 'transition-colors');
+                controlBtn.querySelector('.cute-loader').classList.add('hidden');
+                controlBtn.querySelector('.play-icon').classList.remove('hidden');
+            }
+            updateVolumeDisplay(soundId, savedVolume);
+        }
+
+        function onPlayerStateChange(event) {
+            const player = event.target;
+            const soundId = Object.keys(players).find(key => players[key] === player);
+            const button = document.querySelector(`.play-pause-btn[data-sound="${soundId}"]`);
+            if (!button) return;
+            const playIcon = button.querySelector('.play-icon');
+            const pauseIcon = button.querySelector('.pause-icon');
+            if (event.data === YT.PlayerState.PLAYING) {
+                playIcon.classList.add('hidden');
+                pauseIcon.classList.remove('hidden');
+            } else {
+                playIcon.classList.remove('hidden');
+                pauseIcon.classList.add('hidden');
+            }
+        }
+
+        let timerInterval, timeRemaining, isPaused = true, mode = 'focus', totalDuration;
+        const pomodoroTimerEl = document.getElementById('pomodoro-timer');
+        const timerDisplay = document.getElementById('timer-display'), timerModeDisplay = document.getElementById('timer-mode');
+        const startPauseBtn = document.getElementById('start-pause-btn'), resetBtn = document.getElementById('reset-btn');
+        const focusDurationInput = document.getElementById('focus-duration'), breakDurationInput = document.getElementById('break-duration');
+        const progressRing = document.getElementById('progress-ring');
+        const radius = progressRing.r.baseVal.value;
+        const circumference = 2 * Math.PI * radius;
+        progressRing.style.strokeDasharray = `${circumference} ${circumference}`;
+        progressRing.style.strokeDashoffset = circumference;
+
+        function setProgress(percent) {
+            const offset = circumference - (percent / 100) * circumference;
+            progressRing.style.strokeDashoffset = offset;
+        }
+        
+        function initPomodoro() { resetTimer(); }
+        
+        function updateTimerDisplay() { 
+            if (timeRemaining < 0) return;
+            const minutes = Math.floor(timeRemaining / 60); 
+            const seconds = timeRemaining % 60; 
+            timerDisplay.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`; 
+            const percent = totalDuration > 0 ? ((totalDuration - timeRemaining) / totalDuration) * 100 : 0;
+            setProgress(percent);
+        }
+        
+        function startTimer() { 
+            if (isPaused) { 
+                isPaused = false; 
+                startPauseBtn.textContent = 'Jeda';
+                pomodoroTimerEl.classList.add('running');
+                timerInterval = setInterval(() => { 
+                    timeRemaining--; 
+                    updateTimerDisplay(); 
+                    if (timeRemaining < 0) { 
+                        clearInterval(timerInterval); 
+                        if (mode === 'focus') updateStats();
+                        playNotificationSound(); 
+                        switchMode(); 
+                    } 
+                }, 1000); 
+            } 
+        }
+        
+        function pauseTimer() { 
+            if (!isPaused) { 
+                isPaused = true; 
+                startPauseBtn.textContent = 'Lanjut'; 
+                pomodoroTimerEl.classList.remove('running');
+                clearInterval(timerInterval); 
+            } 
+        }
+        
+        function resetTimer() { 
+            clearInterval(timerInterval); 
+            isPaused = true; 
+            const newDuration = (mode === 'focus' ? parseInt(focusDurationInput.value) : parseInt(breakDurationInput.value)) || 25; 
+            totalDuration = newDuration * 60;
+            timeRemaining = totalDuration; 
+            startPauseBtn.textContent = 'Mulai'; 
+            pomodoroTimerEl.classList.remove('running');
+            updateTimerDisplay(); 
+        }
+        
+        function switchMode() { 
+            mode = mode === 'focus' ? 'break' : 'focus'; 
+            timerModeDisplay.textContent = mode === 'focus' ? 'Waktunya Fokus!' : 'Waktunya Istirahat!'; 
+            resetTimer(); 
+        }
+        
+        function playNotificationSound() { 
+            if (isAudioUnlocked) { 
+                const synth = new Tone.Synth().toDestination(); 
+                synth.triggerAttackRelease("C5", "8n", Tone.now()); 
+                synth.triggerAttackRelease("G5", "8n", Tone.now() + 0.2); 
+            } 
+        }
+
+        function updateVolumeDisplay(soundId, volume) {
+            const control = document.querySelector(`.volume-slider[data-sound="${soundId}"]`)?.closest('.flex-grow');
+            if (!control) return;
+            const volumePercentageSpan = control.querySelector('.volume-percentage');
+            const volumeIcon = control.querySelector('.volume-icon');
+            const volumeMuteIcon = control.querySelector('.volume-mute-icon');
+            const volumeSlider = control.querySelector('.volume-slider');
+            volumePercentageSpan.textContent = `${volume}%`;
+            volumeIcon.classList.toggle('hidden', volume == 0);
+            volumeMuteIcon.classList.toggle('hidden', volume > 0);
+            const percentage = (volume / 100) * 100;
+            const sliderBg = document.body.classList.contains('dark') ? '#4a5568' : '#e5e7eb';
+            volumeSlider.style.background = `linear-gradient(to right, #818cf8 ${percentage}%, ${sliderBg} ${percentage}%)`;
+        }
+
+        function addEventListeners() {
+            document.getElementById('theme-checkbox').addEventListener('change', toggleTheme);
+            
+            document.getElementById('sound-controls').addEventListener('click', (e) => {
+                const button = e.target.closest('.play-pause-btn');
+                if (button) {
+                    unlockAudio();
+                    const soundId = button.dataset.sound;
+                    const player = players[soundId];
+                    if (!player) return;
+                    const volumeSlider = document.querySelector(`.volume-slider[data-sound="${soundId}"]`);
+                    const currentVolume = parseInt(volumeSlider.value);
+                    if (player.getPlayerState() === YT.PlayerState.PLAYING) {
+                        player.pauseVideo();
+                    } else {
+                        player.playVideo();
+                        if (player.isMuted() || currentVolume === 0) { 
+                            player.unMute(); 
+                            const targetVolume = currentVolume === 0 ? 50 : currentVolume;
+                            player.setVolume(targetVolume); 
+                            volumeSlider.value = targetVolume;
+                            updateVolumeDisplay(soundId, targetVolume);
+                        }
+                    }
+                }
+            });
+
+            document.getElementById('sound-controls').addEventListener('input', (e) => {
+                const slider = e.target.closest('.volume-slider');
+                if (slider) {
+                    unlockAudio();
+                    const soundId = slider.dataset.sound;
+                    const player = players[soundId];
+                    const volume = parseInt(e.target.value);
+                    if (player && typeof player.setVolume === 'function') {
+                        if (volume > 0) { player.unMute(); player.setVolume(volume); if (player.getPlayerState() !== YT.PlayerState.PLAYING) { player.playVideo(); } } 
+                        else { player.mute(); player.pauseVideo(); }
+                        updateVolumeDisplay(soundId, volume);
+                        saveSettings();
+                    }
+                }
+            });
+
+            document.getElementById('global-toggle-container').addEventListener('click', () => {
+                const toggle = document.getElementById('global-toggle-container');
+                const newState = toggle.dataset.state === 'paused' ? 'playing' : 'paused';
+                toggle.dataset.state = newState;
+                toggle.classList.toggle('active', newState === 'playing');
+                
+                document.getElementById('global-play-option').classList.toggle('active', newState === 'playing');
+                document.getElementById('global-pause-option').classList.toggle('active', newState === 'paused');
+
+                unlockAudio();
+                if (newState === 'playing') {
+                    sounds.forEach(sound => {
+                        const player = players[sound.id];
+                        if (player && typeof player.playVideo === 'function') {
+                            player.playVideo();
+                            player.unMute();
+                            const volumeSlider = document.querySelector(`.volume-slider[data-sound="${sound.id}"]`);
+                            const currentVolume = parseInt(volumeSlider.value);
+                            const targetVolume = currentVolume === 0 ? 50 : currentVolume;
+                            player.setVolume(targetVolume); 
+                            volumeSlider.value = targetVolume;
+                            updateVolumeDisplay(sound.id, targetVolume);
+                        }
+                    });
+                } else {
+                     sounds.forEach(sound => {
+                        const player = players[sound.id];
+                        if (player && typeof player.pauseVideo === 'function') { player.pauseVideo(); }
+                    });
+                }
+                saveSettings();
+            });
+
+            startPauseBtn.addEventListener('click', () => { unlockAudio(); isPaused ? startTimer() : pauseTimer(); });
+            resetBtn.addEventListener('click', () => { mode = 'focus'; timerModeDisplay.textContent = 'Waktunya Fokus!'; resetTimer(); });
+            focusDurationInput.addEventListener('change', () => { if(mode === 'focus') resetTimer(); saveSettings(); });
+            breakDurationInput.addEventListener('change', () => { if(mode === 'break') resetTimer(); saveSettings(); });
+        }
+    </script>
+    <script src="https://www.youtube.com/iframe_api"></script>
 </body>
 </html>
